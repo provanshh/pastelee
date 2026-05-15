@@ -1,0 +1,97 @@
+:root {
+  --bg: #0f172a;
+  --panel: #111827;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #22c55e;
+  --border: #1f2937;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 20% 20%, #1e293b, #0f172a);
+  color: var(--text);
+}
+
+.app {
+  padding: 18px;
+}
+
+h1 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+}
+
+label {
+  display: block;
+  color: var(--muted);
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.row input {
+  flex: 1;
+}
+
+button {
+  border: none;
+  background: var(--accent);
+  color: #0b0b0b;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.status {
+  margin-top: 16px;
+  padding: 8px;
+  background: #0b1220;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.last {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.history {
+  margin-top: 8px;
+  max-height: 140px;
+  overflow: auto;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.history-item {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+
+.history-item:last-child { border-bottom: none; }

@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Telegram Clipboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <h1>Telegram Clipboard</h1>
+      <label>Relay URL</label>
+      <input id="relayUrl" type="text" />
+
+      <label>Bot Token</label>
+      <input id="botToken" type="text" placeholder="123456:ABC-DEF..." />
+
+      <label>Target Telegram User ID</label>
+      <input id="targetId" type="text" placeholder="User id from /start" />
+
+      <label>Pairing Code</label>
+      <div class="row">
+        <input id="pairCode" type="text" placeholder="123456" />
+        <button id="pairButton">Pair</button>
+        <button id="openBot">Open Bot</button>
+      </div>
+
+      <div class="row" style="margin-top:8px;">
+        <button id="clearPair">Clear Pairing</button>
+      </div>
+
+      <div class="status" id="status">Not paired</div>
+      <div class="last" id="last">No messages yet</div>
+
+      <h3 style="margin-top:12px;">History</h3>
+      <div id="history" class="history">No messages yet</div>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>

@@ -1,0 +1,41 @@
+name: Build Windows Installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd electron
+          npm ci
+
+      - name: Build installer
+        run: |
+          cd electron
+          npm run dist
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }} # optional code signing
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            electron/dist/*.exe
+            electron/dist/*.msi
+            electron/dist/*.zip
