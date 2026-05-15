@@ -1,14 +1,17 @@
-// Minimal renderer: enter relay URL and pairing code, click Pair, then automatically poll.
+// Minimal renderer: enter Target Telegram User ID and start the bot.
 
-let clientId = null;
-let clientToken = null;
-let pollingTimer = null;
-
-const relayUrlInput = document.getElementById("relayUrl");
-const pairCodeInput = document.getElementById("pairCode");
 const pairButton = document.getElementById("pairButton");
+const targetIdInput = document.getElementById("targetId");
+const pairingGuideEl = document.getElementById("pairingGuide");
 const statusEl = document.getElementById("status");
 const lastEl = document.getElementById("last");
+const appEl = document.querySelector(".app");
+const statusIndicatorEl = document.getElementById("statusIndicator");
+const statusTextEl = document.getElementById("statusText");
+const confettiLayerEl = document.getElementById("confettiLayer");
+
+let isPairingMode = false;
+let isConnecting = false;
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -18,50 +21,85 @@ function setLast(text) {
   lastEl.textContent = text;
 }
 
-function getRelayUrl() {
-  return relayUrlInput.value.trim().replace(/\/$/, "") || "http://127.0.0.1:8000";
+function setLiveState(state, text) {
+  statusIndicatorEl.classList.remove("offline", "connecting", "online", "error");
+  statusIndicatorEl.classList.add(state);
+  statusTextEl.textContent = text;
 }
 
-async function pair() {
-  const code = pairCodeInput.value.trim();
-  if (!code) return setStatus("Enter pairing code");
+function triggerPairSuccessEffects() {
+  appEl.classList.remove("pair-success");
+  // force reflow so class animation can replay
+  void appEl.offsetWidth;
+  appEl.classList.add("pair-success");
+  launchConfetti();
+}
 
-  setStatus("Pairing...");
-  try {
-    const resp = await fetch(`${getRelayUrl()}/pair/claim`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pair_code: code, client_name: "desktop" }),
-    });
-    if (!resp.ok) return setStatus("Pair failed");
-    const data = await resp.json();
-    clientId = data.client_id;
-    clientToken = data.client_token;
-    setStatus("Paired");
-    setLast("Waiting for messages...");
-    startPolling();
-  } catch (err) {
-    setStatus("Relay error");
+function launchConfetti() {
+  const colors = ["rgba(255,255,255,0.9)", "rgba(125,211,252,0.9)", "rgba(52,211,153,0.9)", "rgba(255,255,255,0.7)"];
+  const count = 24;
+  for (let i = 0; i < count; i += 1) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    const left = Math.floor(Math.random() * 100);
+    const duration = 900 + Math.floor(Math.random() * 500);
+    const xShift = Math.floor(Math.random() * 120) - 60;
+    const spin = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 180 : -180);
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    piece.style.left = `${left}vw`;
+    piece.style.background = color;
+    piece.style.setProperty("--fall-duration", `${duration}ms`);
+    piece.style.setProperty("--x-shift", `${xShift}px`);
+    piece.style.setProperty("--spin", `${spin}deg`);
+    piece.style.transform = `translateY(${Math.floor(Math.random() * 18) - 12}px)`;
+    piece.style.width = `${6 + Math.floor(Math.random() * 4)}px`;
+    piece.style.height = `${8 + Math.floor(Math.random() * 5)}px`;
+    piece.style.opacity = `${0.58 + Math.random() * 0.25}`;
+
+    confettiLayerEl.appendChild(piece);
+    setTimeout(() => piece.remove(), duration + 160);
   }
 }
 
-async function pullMessages() {
-  if (!clientId || !clientToken) return;
-  try {
-    const resp = await fetch(
-      `${getRelayUrl()}/pull?client_id=${encodeURIComponent(clientId)}&client_token=${encodeURIComponent(clientToken)}`
-    );
-    if (!resp.ok) {
-      setStatus("Unauthorized - re-pair");
-      stopPolling();
-      return;
+function togglePairingGuide() {
+  isPairingMode = !isPairingMode;
+  pairingGuideEl.style.display = isPairingMode ? "block" : "none";
+  if (isPairingMode) {
+    targetIdInput.focus();
+  }
+}
+
+// Check if input is a valid Telegram user ID (numeric, exactly 10 digits)
+function isValidTelegramId(id) {
+  return /^\d{10}$/.test(id.trim());
+}
+
+// Auto-connect when a valid ID is entered
+targetIdInput.addEventListener("input", async () => {
+  const id = targetIdInput.value.trim();
+  if (isValidTelegramId(id) && !isConnecting) {
+    isConnecting = true;
+    targetIdInput.disabled = true;
+    setStatus("Connecting...");
+    setLiveState("connecting", "Connecting...");
+    const resp = await window.api.startBot(id);
+    targetIdInput.disabled = false;
+    isConnecting = false;
+    if (resp && resp.ok) {
+      setStatus(`Connected as @${resp.username || "?"}`);
+      setLiveState("online", "Connected");
+      triggerPairSuccessEffects();
+      isPairingMode = false;
+      pairingGuideEl.style.display = "none";
+    } else {
+      setStatus(`Connection failed: ${resp && resp.error}`);
+      setLiveState("error", "Error");
     }
-    const data = await resp.json();
-    for (const m of data.messages || []) await handleMessage(m);
-  } catch (err) {
-    setStatus("Relay offline");
   }
-}
+});
+
+// no relay/polling; bot runs in main process
 
 async function handleMessage(message) {
   if (message.type === "text") {
@@ -75,42 +113,28 @@ async function handleMessage(message) {
   }
 }
 
-function startPolling() {
-  if (pollingTimer) return;
-  pollingTimer = setInterval(pullMessages, 1000);
-}
-
-function stopPolling() {
-  if (!pollingTimer) return;
-  clearInterval(pollingTimer);
-  pollingTimer = null;
-}
+function stopPolling() {}
 
 // replace pairing UI with bot start/stop UI
 pairButton.addEventListener("click", async () => {
-  const token = document.getElementById("botToken").value.trim();
-  const target = document.getElementById("targetId").value.trim();
-  if (!token) return setStatus("Enter bot token");
-  setStatus("Starting bot...");
-  const resp = await window.api.startBot(token, target || null);
-  if (resp && resp.ok) {
-    setStatus(`Bot running as @${resp.username || "?"}`);
-  } else {
-    setStatus(`Bot start failed: ${resp && resp.error}`);
-  }
+  togglePairingGuide();
 });
 
 document.getElementById("openBot").addEventListener("click", async () => {
-  const token = document.getElementById("botToken").value.trim();
-  if (!token) return setStatus("Enter bot token to open chat");
-  // try to extract username by calling the bot via startBot with no target but we don't want to start polling twice
-  // instead ask user to open t.me with bot token not possible; prompt them to open t.me manually
-  setStatus("Open Telegram and search for your bot to start a conversation.");
+  const info = await window.api.getBotInfo();
+  if (info && info.username) {
+    const url = `https://t.me/${encodeURIComponent(info.username)}`;
+    const ok = await window.api.openExternal(url);
+    setStatus(ok ? "Opened bot chat" : "Failed to open");
+  } else {
+    setStatus("Bot username not configured");
+  }
 });
 
 document.getElementById("clearPair").addEventListener("click", async () => {
   await window.api.stopBot();
   setStatus("Not running");
+  setLiveState("offline", "Stopped");
   setLast("Stopped");
 });
 
@@ -145,7 +169,17 @@ async function handleMessage(message) {
 // subscribe to bot events from main
 window.api.onBotEvent((ev) => {
   if (!ev) return;
-  if (ev.type === "status") setStatus(ev.message);
+  if (ev.type === "status") {
+    setStatus(ev.message);
+    const msg = String(ev.message || "").toLowerCase();
+    if (msg.includes("connected") || msg.includes("running")) {
+      setLiveState("online", "Live");
+    } else if (msg.includes("connecting")) {
+      setLiveState("connecting", "Connecting...");
+    } else if (msg.includes("stopped") || msg.includes("not")) {
+      setLiveState("offline", "Offline");
+    }
+  }
   else if (ev.type === "text") {
     // main already copied to clipboard; reflect in history
     pushHistory(ev.text || "");
@@ -154,6 +188,9 @@ window.api.onBotEvent((ev) => {
     pushHistory("[image] " + (ev.filename || ""));
     setLast("Image copied from bot");
   } else if (ev.type === "error") {
+    setLiveState("error", "Error");
     setLast("Error: " + (ev.message || ""));
   }
 });
+
+setLiveState("offline", "Offline");
