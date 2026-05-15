@@ -32,8 +32,7 @@ jobs:
           cd electron
           npm run dist
         env:
-          CSC_LINK: ${{ secrets.CSC_LINK }} # optional code signing
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload artifact
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
