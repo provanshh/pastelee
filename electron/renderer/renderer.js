@@ -10,7 +10,6 @@ const statusIndicatorEl = document.getElementById("statusIndicator");
 const statusTextEl = document.getElementById("statusText");
 const confettiLayerEl = document.getElementById("confettiLayer");
 
-let isPairingMode = false;
 let isConnecting = false;
 
 function setStatus(text) {
@@ -62,14 +61,6 @@ function launchConfetti() {
   }
 }
 
-function togglePairingGuide() {
-  isPairingMode = !isPairingMode;
-  pairingGuideEl.style.display = isPairingMode ? "block" : "none";
-  if (isPairingMode) {
-    targetIdInput.focus();
-  }
-}
-
 // Check if input is a valid Telegram user ID (numeric, exactly 10 digits)
 function isValidTelegramId(id) {
   return /^\d{10}$/.test(id.trim());
@@ -90,8 +81,6 @@ targetIdInput.addEventListener("input", async () => {
       setStatus(`Connected as @${resp.username || "?"}`);
       setLiveState("online", "Connected");
       triggerPairSuccessEffects();
-      isPairingMode = false;
-      pairingGuideEl.style.display = "none";
     } else {
       setStatus(`Connection failed: ${resp && resp.error}`);
       setLiveState("error", "Error");
@@ -117,7 +106,8 @@ function stopPolling() {}
 
 // replace pairing UI with bot start/stop UI
 pairButton.addEventListener("click", async () => {
-  togglePairingGuide();
+  targetIdInput.focus();
+  pairingGuideEl.scrollIntoView({ behavior: "smooth", block: "center" });
 });
 
 document.getElementById("openBot").addEventListener("click", async () => {
