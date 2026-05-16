@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>PasteLee by Vansh </title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="prismContainer" class="prism-container" aria-hidden="true"></div>
+    <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
+    <div class="app">
+      <div class="window-header">
+        <div>
+          <!-- <div class="eyebrow">Telegram Clipboard</div> -->
+          <h1>Clipboard Sync</h1>
+          <p class="subtitle">Connect & Paste anywhere, anytime within microseconds</p>
+        </div>
+        <div class="top-status-bar">
+          <span id="statusIndicator" class="indicator offline"></span>
+          <span id="statusText">Offline</span>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <button id="pairButton" class="btn btn-primary"><span class="btn-icon">⌘</span><span class="btn-text">Pair</span></button>
+        <button id="openBot" class="btn btn-secondary"><span class="btn-icon">↗</span><span class="btn-text">Open Bot</span></button>
+        <button id="clearPair" class="btn btn-danger"><span class="btn-icon">●</span><span class="btn-text">Stop Pairing</span></button>
+      </div>
+
+      <div id="pairingGuide" class="pairing-guide">
+        <h3>🔗 Pairing Steps</h3>
+        <ol>
+          <li>Type 'pastethis_bot' on Telegram (or click "Open Bot" button above)</li>
+          <li>Send <code>/start</code> to get your user ID</li>
+          <li>Copy your ID</li>
+          <li>Paste it below and it will auto-connect</li>
+        </ol>
+      </div>
+
+      <label>Target Telegram User ID</label>
+      <input id="targetId" type="text" placeholder="Paste your ID here" />
+
+      <div class="status" id="status">Not paired</div>
+      <div class="last" id="last">No messages yet</div>
+
+      <h3 style="margin-top:12px;">History</h3>
+      <div id="history" class="history">No messages yet</div>
+    </div>
+    <script src="renderer.js"></script>
+    <script src="prism.js"></script>
+  </body>
+</html>

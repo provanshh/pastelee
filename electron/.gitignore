@@ -1,0 +1,2 @@
+# ignore built installer packages
+eelectron/*.tgz
